@@ -7,7 +7,7 @@ const byte pin_up_button = 5;
 // This pin is for "down"button
 const byte pin_down_button = 6;
 // Default gear
-byte current_gear = 5;
+byte current_gear = 4;
 
 // Pin for enable "tuning" mode 
 // (during which we can change the "gears" array's values)
@@ -28,6 +28,8 @@ const byte gears_count = 9;
 // Defines, which servo angle corresponds to each gear
 byte gears[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
 
+String hint;
+
 /*---------------------------------------------------------------*/
 
 void setup()
@@ -44,6 +46,9 @@ void setup()
 
   pinMode(pin_down_button, INPUT); 
   digitalWrite(pin_down_button, HIGH);
+
+  pinMode(pin_tune_up, INPUT); 
+  digitalWrite(pin_tune_up, HIGH);
 
   pinMode(pin_tuning_mode, INPUT);
 
@@ -98,15 +103,14 @@ void loop()
     {
       tuning = false;
       String s;
+      // Saving new values to EEPROM
       for(byte i = 0; i < gears_count; i++)
       {
         uView.clear(PAGE);
         uView.setCursor(0, 0);
         uView.print("Write EEPROM...");
         uView.setCursor(0, 10);
-        s = "Gear " + i;
-        s += " val " + gears[i];
-        uView.print(s);
+        uView.print("Gear "); uView.print(i + 1); uView.print(" val "); uView.print(gears[i]);
         uView.display();
         EEPROM.update(i, gears[i]);
       }
@@ -119,10 +123,10 @@ void loop()
   else
     uView.print("tune off");
 
-  if (tuning && tune_up_pressed == 1 && gears[current_gear] < gears[current_gear + 1])
+  if (tuning && tune_up_pressed == 1 && (gears[current_gear] < gears[current_gear + 1] || current_gear == gears_count - 1))
     gears[current_gear]++;
 
-  if (tuning && tune_down_pressed == 1 && gears[current_gear] > gears[current_gear - 1])
+  if (tuning && tune_down_pressed == 1 && (gears[current_gear] > gears[current_gear - 1] || current_gear == 0))
     gears[current_gear]--;
 
   if (gear_up_pressed == 1 && current_gear < gears_count - 1)
@@ -136,10 +140,10 @@ void loop()
 
   // Display info on the screen
   uView.setCursor(0, 0);
-  uView.print(gears[current_gear]);
+  uView.print("gear: ");
+  uView.print(current_gear + 1);
   uView.setCursor(0, 10);
-  uView.print(current_gear);
-
+  uView.print("angle: ");
+  uView.print(gears[current_gear]);
   uView.display();
-
 }
