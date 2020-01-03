@@ -1,5 +1,6 @@
 #include <MicroView.h>
 #include <Servo.h>
+#include <EEPROM.h>
 
 // This pin is for "up" button
 const byte pin_up_button = 5;
@@ -25,7 +26,7 @@ const byte pin_rear_durailleur_servo = 2;
 
 const byte gears_count = 9;
 // Defines, which servo angle corresponds to each gear
-byte gears[gears_count] = {0, 20, 40, 60, 80, 100, 120, 140, 160};
+byte gears[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
 
 /*---------------------------------------------------------------*/
 
@@ -45,6 +46,15 @@ void setup()
   digitalWrite(pin_down_button, HIGH);
 
   pinMode(pin_tuning_mode, INPUT);
+
+  byte g;
+  // Reading stored gears angles from EEPROM
+  for(byte i = 0; i < gears_count; i++)
+  {
+    g = EEPROM.read(i);
+    if (g != 255) // "Virgin" EEPROM's bytes values is 255, so we don't need it
+      gears[i] = g;      
+  }
 }
 
 void loop()
@@ -85,7 +95,22 @@ void loop()
     if (!tuning)
       tuning = true;
     else
+    {
       tuning = false;
+      String s;
+      for(byte i = 0; i < gears_count; i++)
+      {
+        uView.clear(PAGE);
+        uView.setCursor(0, 0);
+        uView.print("Write EEPROM...");
+        uView.setCursor(0, 10);
+        s = "Gear " + i;
+        s += " val " + gears[i];
+        uView.print(s);
+        uView.display();
+        EEPROM.update(i, gears[i]);
+      }
+    }
   }
 
   uView.setCursor(0, 20);
