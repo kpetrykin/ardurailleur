@@ -28,8 +28,6 @@ const byte gears_count = 9;
 // Defines, which servo angle corresponds to each gear
 byte gears[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
 
-String hint;
-
 /*---------------------------------------------------------------*/
 
 void setup()
@@ -57,8 +55,23 @@ void setup()
   for(byte i = 0; i < gears_count; i++)
   {
     g = EEPROM.read(i);
-    if (g != 255) // "Virgin" EEPROM's bytes values is 255, so we don't need it
+    if (g != 255) // "Virgin" EEPROM's byte value is 255, so we don't need it
       gears[i] = g;      
+  }
+}
+
+void save_to_EEPROM()
+{
+  for(byte i = 0; i < gears_count; i++)
+  {
+    uView.clear(PAGE);
+    uView.setCursor(0, 0);
+    uView.print("Write EEPROM...");
+    uView.setCursor(0, 10);
+    uView.print("Gear "); uView.print(i + 1); uView.print(" val "); uView.print(gears[i]);
+    uView.display();
+    // "Update" procedure is more sparing for EEPROM because it doesn't write value if it's the same
+    EEPROM.update(i, gears[i]);
   }
 }
 
@@ -102,18 +115,8 @@ void loop()
     else
     {
       tuning = false;
-      String s;
       // Saving new values to EEPROM
-      for(byte i = 0; i < gears_count; i++)
-      {
-        uView.clear(PAGE);
-        uView.setCursor(0, 0);
-        uView.print("Write EEPROM...");
-        uView.setCursor(0, 10);
-        uView.print("Gear "); uView.print(i + 1); uView.print(" val "); uView.print(gears[i]);
-        uView.display();
-        EEPROM.update(i, gears[i]);
-      }
+      save_to_EEPROM();
     }
   }
 
