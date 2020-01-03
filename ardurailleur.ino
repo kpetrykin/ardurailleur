@@ -1,67 +1,86 @@
 #include <MicroView.h>
 #include <Servo.h>
 
-int pin = 6;
-int pin2 = 5;
-int g = 0;
+// This pin is for "up" button
+const byte pin_up_button = 5;
+// This pin is for "down"button
+const byte pin_down_button = 6;
+// Default gear
+byte current_gear = 5;
 
-int pin_mode = 0;
-int pin_tune_up = 1;
-int pin_tune_down = 3;
+// Pin for enable "tuning" mode 
+// (during which we can change the "gears" array's values)
+const byte pin_tuning_mode = 0;
+const byte pin_tune_up = 1;
+const byte pin_tune_down = 3;
 
+// Flag for "tuning" mode
 bool tuning = false;
 
-int plus, minus, tune, tune_up, tune_down = 0;
-Servo myservo;
+byte gear_up_pressed, gear_down_pressed, tune_mode_pressed, tune_up_pressed, tune_down_pressed = 0;
 
-int gears[9] = {0, 20, 40, 60, 80, 100, 120, 140, 160};
+// Class for interacting with rear durailleur's servo
+Servo rear_durailleur_servo;
+const byte pin_rear_durailleur_servo = 2;
+
+const byte gears_count = 9;
+// Defines, which servo angle corresponds to each gear
+byte gears[gears_count] = {0, 20, 40, 60, 80, 100, 120, 140, 160};
+
+/*---------------------------------------------------------------*/
 
 void setup()
 {
+  // Start MicroView screen
   uView.begin();
 
-  myservo.attach(2);
-  pinMode(pin, INPUT); //конфигурируем пин как выход ( к нему подключен светодиод)
-  digitalWrite(pin, HIGH); //включаем внутренний pull-up резистор
+  // Define servo's pin
+  rear_durailleur_servo.attach(pin_rear_durailleur_servo);
 
-  pinMode(pin2, INPUT); //конфигурируем пин как выход ( к нему подключен светодиод)
-  digitalWrite(pin2, HIGH); //включаем внутренний pull-up резистор
+  // Configuring pins as inputs and enabling pull-up resistors
+  pinMode(pin_up_button, INPUT); 
+  digitalWrite(pin_up_button, HIGH);
 
-  pinMode(pin_mode, INPUT);
+  pinMode(pin_down_button, INPUT); 
+  digitalWrite(pin_down_button, HIGH);
+
+  pinMode(pin_tuning_mode, INPUT);
 }
 
 void loop()
 {
   uView.clear(PAGE);
 
-  uView.setCursor(0, 20);
-
-  if (digitalRead(pin_mode) == LOW)
-    tune++;
+  if (digitalRead(pin_tuning_mode) == LOW)
+    tune_mode_pressed++;
   else
-    tune = 0;
+    tune_mode_pressed = 0;
 
   if (digitalRead(pin_tune_up) == LOW)
-    tune_up++;
+    tune_up_pressed++;
   else
-    tune_up = 0;
+    tune_up_pressed = 0;
 
   if (digitalRead(pin_tune_down) == LOW)
-    tune_down++;
+    tune_down_pressed++;
   else
-    tune_down = 0;
+    tune_down_pressed = 0;
 
-  if (digitalRead(pin2) == LOW)
-    plus++;
+  // Detection of shrt-press of the "gear up" button
+  if (digitalRead(pin_up_button) == LOW)
+    gear_up_pressed++;
   else
-    plus = 0;
+    gear_up_pressed = 0;
 
-  if (digitalRead(pin) == LOW)
-    minus++;
+  // Detection of shrt-press of the "gear down" button
+  if (digitalRead(pin_down_button) == LOW)
+    gear_down_pressed++;
   else
-    minus = 0;
+    gear_down_pressed = 0;
 
-  if (tune == 100)
+  // If the "tuning mode" button has been pressed for 100 loops
+  // (long press)
+  if (tune_mode_pressed == 100)
   {
     if (!tuning)
       tuning = true;
@@ -69,29 +88,32 @@ void loop()
       tuning = false;
   }
 
+  uView.setCursor(0, 20);
   if (tuning)
     uView.print("tune on");
   else
     uView.print("tune off");
 
-  if (tuning && tune_up == 1 && gears[g] < gears[g + 1])
-    gears[g]++;
+  if (tuning && tune_up_pressed == 1 && gears[current_gear] < gears[current_gear + 1])
+    gears[current_gear]++;
 
-  if (tuning && tune_down == 1 && gears[g] > gears[g - 1])
-    gears[g]--;
+  if (tuning && tune_down_pressed == 1 && gears[current_gear] > gears[current_gear - 1])
+    gears[current_gear]--;
 
-  if (plus == 1 && g < 8)
-    g++;
+  if (gear_up_pressed == 1 && current_gear < gears_count - 1)
+    current_gear++;
 
-  if (minus == 1 && g > 0)
-    g--;
+  if (gear_down_pressed == 1 && current_gear > 0)
+    current_gear--;
 
-  // устанавливаем сервопривод в крайнее правое положение
-  myservo.write(gears[g]);
+  // Set the servo to the current gear's angle
+  rear_durailleur_servo.write(gears[current_gear]);
+
+  // Display info on the screen
   uView.setCursor(0, 0);
-  uView.print(gears[g]);
+  uView.print(gears[current_gear]);
   uView.setCursor(0, 10);
-  uView.print(g);
+  uView.print(current_gear);
 
   uView.display();
 
