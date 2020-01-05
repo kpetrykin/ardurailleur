@@ -26,7 +26,7 @@ const byte pin_rear_durailleur_servo = 2;
 
 const byte gears_count = 9;
 // Defines, which servo angle corresponds to each gear
-byte gears[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
+byte gears_angles[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
 
 /*---------------------------------------------------------------*/
 
@@ -56,7 +56,7 @@ void setup()
   {
     g = EEPROM.read(i);
     if (g != 255) // "Virgin" EEPROM's byte value is 255, so we don't need it
-      gears[i] = g;      
+      gears_angles[i] = g;      
   }
 }
 
@@ -68,10 +68,10 @@ void save_to_EEPROM()
     uView.setCursor(0, 0);
     uView.print("Write EEPROM...");
     uView.setCursor(0, 10);
-    uView.print("Gear "); uView.print(i + 1); uView.print(" val "); uView.print(gears[i]);
+    uView.print("Gear "); uView.print(i + 1); uView.print(" val "); uView.print(gears_angles[i]);
     uView.display();
     // "Update" procedure is more sparing for EEPROM because it doesn't write value if it's the same
-    EEPROM.update(i, gears[i]);
+    EEPROM.update(i, gears_angles[i]);
   }
 }
 
@@ -119,7 +119,7 @@ void loop()
   else
     tune_down_pressed = 0;
 
-  // Detection of shrt-press of the "gear up" button
+  // Detection of short-press of the "gear up" button
   if (digitalRead(pin_up_button) == LOW)
     gear_up_pressed++;
   else
@@ -147,15 +147,15 @@ void loop()
 
   uView.setCursor(0, 20);
   if (tuning)
-    uView.print("tune on");
+    uView.print("tune: on");
   else
-    uView.print("tune off");
+    uView.print("tune: off");
 
-  if (tuning && tune_up_pressed == 1 && (gears[current_gear] < gears[current_gear + 1] || current_gear == gears_count - 1))
-    gears[current_gear]++;
+  if (tuning && tune_up_pressed == 1 && (gears_angles[current_gear] < gears_angles[current_gear + 1] || current_gear == gears_count - 1))
+    gears_angles[current_gear]++;
 
-  if (tuning && tune_down_pressed == 1 && (gears[current_gear] > gears[current_gear - 1] || current_gear == 0))
-    gears[current_gear]--;
+  if (tuning && tune_down_pressed == 1 && (gears_angles[current_gear] > gears_angles[current_gear - 1] || current_gear == 0))
+    gears_angles[current_gear]--;
 
   if (gear_up_pressed == 1 && current_gear < gears_count - 1)
     current_gear++;
@@ -164,7 +164,7 @@ void loop()
     current_gear--;
 
   // Set the servo to the current gear's angle
-  rear_durailleur_servo.write(gears[current_gear]);
+  rear_durailleur_servo.write(gears_angles[current_gear]);
 
   // Display info on the screen
   uView.setCursor(0, 0);
@@ -172,7 +172,7 @@ void loop()
   uView.print(current_gear + 1);
   uView.setCursor(0, 10);
   uView.print("angle: ");
-  uView.print(gears[current_gear]);
+  uView.print(gears_angles[current_gear]);
   uView.setCursor(0, 30);
   uView.print("uV: "); uView.print(readVcc());
   uView.display();
