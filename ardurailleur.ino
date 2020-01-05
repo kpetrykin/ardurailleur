@@ -27,6 +27,16 @@ const byte pin_rear_durailleur_servo = 2;
 const byte gears_count = 9;
 // Defines, which servo angle corresponds to each gear
 byte gears_angles[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
+byte current_angle;
+
+// Allow me to intriduce the "Overshifting" - it's the future of bicycle shifting!
+// When you switch to the next gear, the durailleur goes over it for an overshift_timeout 
+// (and after it back to the target gear) - 
+// and this will surely shifts you gear even in cases of a large transmission wear or dirt!
+bool overshifting_enabled = true;
+bool overshift_up_in_process = false, overshift_down_in_process = false;
+byte overshift_timer, overshift_angle;
+byte overshift_timeout = 30;
 
 /*---------------------------------------------------------------*/
 
@@ -51,7 +61,7 @@ void setup()
   pinMode(pin_tuning_mode, INPUT);
 
   byte g;
-  // Reading stored gears angles from EEPROM
+  // Reading stored gears angles from EEPROMovershift_down
   for(byte i = 0; i < gears_count; i++)
   {
     g = EEPROM.read(i);
@@ -158,21 +168,71 @@ void loop()
     gears_angles[current_gear]--;
 
   if (gear_up_pressed == 1 && current_gear < gears_count - 1)
+  {
     current_gear++;
+    
+    if (overshifting_enabled)
+    {
+      overshift_up_in_process = true;
+      overshift_timer = 0;
+    }
+  }
 
   if (gear_down_pressed == 1 && current_gear > 0)
+  {
     current_gear--;
+    
+    if (overshifting_enabled)
+    {
+      overshift_down_in_process = true;
+      overshift_timer = 0;
+    }
+  }
+
+  if (!overshifting_enabled)
+      // If there is no overshifting, just switch to the next gear
+      current_angle = gears_angles[current_gear];
+  else
+  {
+    if (overshift_up_in_process || overshift_down_in_process)
+    {
+      if (overshift_timer < overshift_timeout)
+      {
+        overshift_timer++;
+
+        if (overshift_up_in_process)
+          if (current_gear != gears_count - 1)
+            current_angle = gears_angles[current_gear + 1];
+          else // If we switched to the last gear
+            // Let's try to go over border
+            current_angle = gears_angles[current_gear] + 10;
+
+        if (overshift_down_in_process)
+          if (current_gear != 0)
+            current_angle = gears_angles[current_gear - 1];
+          else // If we switched to the first gear
+            // Let's try to go over border
+            current_angle = 0;
+      }
+      else
+      { // If overshift timer is out, switch to the target gear
+        overshift_up_in_process = false;
+        overshift_down_in_process = false;
+        current_angle = gears_angles[current_gear];
+      }
+    }
+    else // Hold current gear
+      current_angle = gears_angles[current_gear];
+  }
 
   // Set the servo to the current gear's angle
-  rear_durailleur_servo.write(gears_angles[current_gear]);
+  rear_durailleur_servo.write(current_angle);
 
   // Display info on the screen
   uView.setCursor(0, 0);
-  uView.print("gear: ");
-  uView.print(current_gear + 1);
+  uView.print("gear: "); uView.print(current_gear + 1);
   uView.setCursor(0, 10);
-  uView.print("angle: ");
-  uView.print(gears_angles[current_gear]);
+  uView.print("angle: "); uView.print(current_angle);
   uView.setCursor(0, 30);
   uView.print("uV: "); uView.print(readVcc());
   uView.display();
