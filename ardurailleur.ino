@@ -140,14 +140,14 @@ void loop()
   else
     tune_down_pressed = 0;
 
-  // Detection of short-press of the "gear up" button
-  if (digitalRead(pin_up_button) == LOW)
+  // Detection of short-press of the "gear up" button or "tune up" button when not in tuning mode
+  if (digitalRead(pin_up_button) == LOW || (!tuning && tune_up_pressed == 1))
     gear_up_pressed++;
   else
     gear_up_pressed = 0;
 
-  // Detection of shrt-press of the "gear down" button
-  if (digitalRead(pin_down_button) == LOW)
+  // Detection of shrt-press of the "gear down" button or "tune down" button when not in tuning mode
+  if (digitalRead(pin_down_button) == LOW || (!tuning && tune_down_pressed == 1))
     gear_down_pressed++;
   else
     gear_down_pressed = 0;
@@ -202,7 +202,7 @@ void loop()
   if (tuning && tune_down_pressed == 1 && (gears_angles[current_gear] > gears_angles[current_gear - 1] || current_gear == 0))
     gears_angles[current_gear]--;
 
-  if (gear_up_pressed == 1 && current_gear < gears_count - 1)
+  if ( (gear_up_pressed == 1 || (!tuning && tune_up_pressed == 1) ) && current_gear < gears_count - 1)
   {
     current_gear++;
     
