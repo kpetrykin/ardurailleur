@@ -236,15 +236,15 @@ void loop()
         overshift_timer++;
 
         if (overshift_up_in_process)
-          if (current_gear != gears_count - 1)
-            current_angle = gears_angles[current_gear + 1];
+          if (current_gear != gears_count - 1) // Go to the middle from current to next
+            current_angle = gears_angles[current_gear] + (gears_angles[current_gear + 1] - gears_angles[current_gear]) / 2;
           else // If we switched to the last gear
             // Let's try to go over border
             current_angle = gears_angles[current_gear] + 10;
 
         if (overshift_down_in_process)
           if (current_gear != 0)
-            current_angle = gears_angles[current_gear - 1];
+            current_angle = gears_angles[current_gear] - (gears_angles[current_gear] - gears_angles[current_gear - 1]) / 2;
           else // If we switched to the first gear
             // Let's try to go over border
             current_angle = 0;
