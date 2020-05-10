@@ -15,6 +15,12 @@ const byte pin_tuning_mode = 0;
 const byte pin_tune_up = 1;
 const byte pin_tune_down = 3;
 
+// This pin is connected with rear light
+const byte pin_rear_light = A0;
+// This pin is for button, which will handle rear light
+const byte pin_rear_light_button = A5;
+bool rear_light_button_pressed = false;
+
 // Flag for "tuning" mode
 bool tuning = false;
 
@@ -59,6 +65,11 @@ void setup()
   digitalWrite(pin_tune_up, HIGH);
 
   pinMode(pin_tuning_mode, INPUT);
+
+  // Configure this pin as input because rear light needs conection to ground (digital low) 
+  // to be switched and I don't know what will be if connect it to 3.3V (digital high)
+  pinMode(pin_rear_light, OUTPUT);
+  pinMode(pin_rear_light_button, INPUT);
 
   byte g;
   // Reading stored gears angles from EEPROMovershift_down
@@ -140,6 +151,30 @@ void loop()
     gear_down_pressed++;
   else
     gear_down_pressed = 0;
+
+  // Detection of rear light button short-pressing
+  if (digitalRead(pin_rear_light_button) == LOW)
+  {
+    // State change detected
+    if (!rear_light_button_pressed)
+    {
+      // I don't know what will be if send to rear light HIGH signal,
+      // so we will just change this pin from input to output with low (ground) signal 
+      // on each button pressing
+      pinMode(pin_rear_light, OUTPUT);
+      digitalWrite(pin_rear_light, LOW);
+      rear_light_button_pressed = true;
+    }
+  }
+  else // Detection of button release
+  {
+    // State change detected
+    if (rear_light_button_pressed)
+    {
+      pinMode(pin_rear_light, INPUT);
+      rear_light_button_pressed = false;
+    }
+  }
 
   // If the "tuning mode" button has been pressed for 100 loops
   // (long press)
