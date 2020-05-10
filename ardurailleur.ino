@@ -44,6 +44,12 @@ bool overshift_up_in_process = false, overshift_down_in_process = false;
 byte overshift_timer, overshift_angle;
 byte overshift_timeout = 30;
 
+char message[20];
+// Cycles to show messages on the bottom of the screen
+int message_show_time = 200;
+int message_timer = 0;
+bool show_message = false;
+
 /*---------------------------------------------------------------*/
 
 void setup()
@@ -79,6 +85,12 @@ void setup()
     if (g != 255) // "Virgin" EEPROM's byte value is 255, so we don't need it
       gears_angles[i] = g;      
   }
+
+  // Read saved current gear
+  current_gear = EEPROM.read(gears_count);
+
+  if (current_gear == 255)
+    current_gear = 4;
 }
 
 void save_to_EEPROM()
@@ -190,6 +202,18 @@ void loop()
     }
   }
 
+  // Short press on "tune mode" button - saving current ger to EEPROM
+  // (If we save current gear each time we switch it, EEPROM's writing cycles will last too soon. 
+  //  So we have button to save when we are to switch system off)
+  if (tune_mode_pressed == 1)
+  {
+    // Save to the next cell after all gears
+    EEPROM.update(gears_count, current_gear);
+    strcpy(message, "Gear saved");
+    message_timer = 0;
+    show_message = true;
+  }
+
   uView.setCursor(0, 20);
   if (tuning)
     uView.print("tune: on");
@@ -270,5 +294,21 @@ void loop()
   uView.print("angle: "); uView.print(current_angle);
   uView.setCursor(0, 30);
   uView.print("uV: "); uView.print(readVcc());
+  
+  if (show_message)
+  {
+    uView.setCursor(0, 40);
+    uView.print(message);
+
+    if (message_timer < message_show_time)
+      message_timer++;
+    else
+    {
+      message_timer = 0;
+      show_message = false;
+//      message = "";
+    }
+  }
+  
   uView.display();
 }
