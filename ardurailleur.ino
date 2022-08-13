@@ -3,9 +3,9 @@
 #include <EEPROM.h>
 
 // This pin is for "up" button
-const byte pin_up_button = 5;
+const byte pin_up_button = 6;
 // This pin is for "down"button
-const byte pin_down_button = 6;
+const byte pin_down_button = 5;
 // Default gear
 byte current_gear = 4;
 
@@ -30,7 +30,7 @@ byte gear_up_pressed, gear_down_pressed, tune_mode_pressed, tune_up_pressed, tun
 Servo rear_durailleur_servo;
 const byte pin_rear_durailleur_servo = 2;
 
-const byte gears_count = 9;
+const byte gears_count = 11;
 // Defines, which servo angle corresponds to each gear
 byte gears_angles[gears_count] = {20, 40, 60, 80, 100, 120, 140, 160, 180};
 byte current_angle;
@@ -261,14 +261,14 @@ void loop()
 
         if (overshift_up_in_process)
           if (current_gear != gears_count - 1) // Go to the middle from current to next
-            current_angle = gears_angles[current_gear] + (gears_angles[current_gear + 1] - gears_angles[current_gear]) / 2;
+            current_angle = gears_angles[current_gear] + (gears_angles[current_gear + 1] - gears_angles[current_gear]) / 3;
           else // If we switched to the last gear
             // Let's try to go over border
             current_angle = gears_angles[current_gear] + 10;
 
         if (overshift_down_in_process)
           if (current_gear != 0)
-            current_angle = gears_angles[current_gear] - (gears_angles[current_gear] - gears_angles[current_gear - 1]) / 2;
+            current_angle = gears_angles[current_gear] - (gears_angles[current_gear] - gears_angles[current_gear - 1]) / 3;
           else // If we switched to the first gear
             // Let's try to go over border
             current_angle = 0;
